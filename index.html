@@ -17,11 +17,22 @@
             padding: 0;
             box-sizing: border-box;
         }
+        html {
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
         body {
             font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
             color: #333;
             background-color: #f0f5f9;
+            overflow-x: hidden;
+        }
+        /* Buttons, inputs, and form fields don't inherit the page font by
+           default in most browsers — force them to match the rest of the
+           site so every piece of text uses the same typeface. */
+        button, input, textarea, select {
+            font-family: inherit;
         }
         /* Color Palette */
         :root {
@@ -40,6 +51,11 @@
             z-index: 1000;
             box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
+        .main-nav__bar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
         .main-nav ul {
             display: flex;
             justify-content: center;
@@ -47,6 +63,7 @@
             padding: 0;
             margin: 0;
             flex-wrap: wrap;
+            width: 100%;
         }
         .main-nav li { margin: 0; }
         .main-nav a {
@@ -63,6 +80,32 @@
             background-color: var(--color-primary);
             color: var(--color-accent);
         }
+        /* Hamburger toggle — hidden on desktop, shown only under the mobile breakpoint */
+        .nav-toggle {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            gap: 5px;
+            width: 44px;
+            height: 44px;
+            margin: 6px 10px;
+            padding: 0;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+        }
+        .nav-toggle span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 2px;
+            transition: transform 0.25s ease, opacity 0.25s ease;
+        }
+        .nav-toggle[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .nav-toggle[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+        .nav-toggle[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
         /* Header */
         header {
@@ -553,18 +596,47 @@
             header::after { display: none; }
         }
 
+        /* Tablet */
+        @media (max-width: 900px) and (min-width: 769px) {
+            .main-nav a { padding: 12px 12px; font-size: 0.85rem; }
+        }
+
         /* Mobile */
         @media (max-width: 768px) {
             header h1 { font-size: 2rem; }
             header .main-heading { font-size: 1.05rem; }
-            section { padding: 25px; margin: 20px 0; }
-            section h2 { font-size: 1.5rem; }
-            .container { margin-top: 0; }
+            section { padding: 20px; margin: 16px 0; }
+            section h2 { font-size: 1.4rem; }
+            .container { margin-top: 0; padding: 0 16px; }
             .cta-button { display: block; margin: 10px auto; width: 90%; max-width: 300px; }
-            .main-nav ul { flex-direction: column; text-align: center; }
+
+            /* Collapse the nav behind a hamburger toggle instead of dumping
+               every link as a full-height vertical list on load. */
+            .nav-toggle { display: flex; }
+            .main-nav ul {
+                display: none;
+                flex-direction: column;
+                text-align: center;
+                background-color: var(--color-dark);
+            }
+            .main-nav ul.is-open { display: flex; }
+            .main-nav a { padding: 14px 20px; border-top: 1px solid rgba(255,255,255,0.08); }
+
             .expertise-grid, .role-cards, .tools-grid { grid-template-columns: 1fr; }
-            header { padding: 75px 15px 40px 15px; }
+            header { padding: 70px 15px 40px 15px; }
             .cta-buttons { display: flex; flex-direction: column; align-items: center; }
+            .experience-item { padding: 18px 16px; }
+            .experience-item h4 { font-size: 1.05rem; }
+
+            /* Let wide tables scroll horizontally instead of overflowing
+               the viewport or squashing text unreadably. */
+            .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            table { font-size: 0.85rem; }
+        }
+
+        @media (max-width: 400px) {
+            header h1 { font-size: 1.6rem; }
+            .cta-button { padding: 12px 24px; font-size: 0.88rem; }
         }
     </style>
 </head>
@@ -572,7 +644,12 @@
 
 <!-- Navigation -->
 <nav class="main-nav">
-    <ul>
+    <div class="main-nav__bar">
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="primaryNav">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+    <ul id="primaryNav">
         <li><a href="#open-to">Open To</a></li>
         <li><a href="#summary">Summary</a></li>
         <li><a href="#expertise">Expertise</a></li>
@@ -856,6 +933,7 @@
     <!-- Education -->
     <section id="education">
         <h2>Education &amp; Languages</h2>
+        <div class="table-scroll">
         <table>
             <tr>
                 <th>Qualification</th>
@@ -878,8 +956,10 @@
                 <td>2007</td>
             </tr>
         </table>
+        </div>
 
         <h3>Languages</h3>
+        <div class="table-scroll">
         <table>
             <tr>
                 <th>Language</th>
@@ -898,6 +978,7 @@
                 <td>C1 – Advanced</td>
             </tr>
         </table>
+        </div>
     </section>
 
     <!-- Certifications -->
@@ -990,6 +1071,25 @@
         window.location.href = `mailto:londhe.vishalps@gmail.com?subject=${subject}&body=${body}`;
         document.querySelector('.contact-form').reset();
     }
+
+    // Mobile nav: toggle the menu open/closed, and close it again once a
+    // link is tapped or the viewport is resized back up to desktop width.
+    const navToggle = document.getElementById('navToggle');
+    const primaryNav = document.getElementById('primaryNav');
+    function closeNav() {
+        primaryNav.classList.remove('is-open');
+        navToggle.setAttribute('aria-expanded', 'false');
+    }
+    navToggle.addEventListener('click', function () {
+        const isOpen = primaryNav.classList.toggle('is-open');
+        navToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+    primaryNav.querySelectorAll('a').forEach(function (link) {
+        link.addEventListener('click', closeNav);
+    });
+    window.addEventListener('resize', function () {
+        if (window.innerWidth > 768) { closeNav(); }
+    });
 
     const mybutton = document.getElementById("back-to-top");
     window.onscroll = function () {
